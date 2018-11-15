@@ -1,0 +1,30 @@
+## Use of debugger
+-a always,exit -F arch=b64 -S ptrace -k linikatz-ptrace
+-a always,exit -F arch=b32 -S ptrace -k linikatz-ptrace
+
+## Access to hashes
+# SSS
+-a always,exit -F dir=/var/lib/sss/db -F perm=rwx -k linikatz-sss
+# VAS
+-a always,exit -F path=/var/opt/quest/vas/authcache/vas_auth.vdb -F perm=rw -k linikatz-vas
+# Samba
+-a always,exit -F path=/var/lib/samba/private/secrets.tdb -F perm=rw -k linikatz-smb
+# LDAP
+# TODO
+
+## Access to machine tickets
+# SSS
+# (Same as Access to hashes)
+# VAS
+-a always,exit -F path=/etc/opt/quest/vas/host.keytab -F perm=rw -k linikatz-vas
+# (Doesn't have ccache?)
+
+## Access to UNIX sockets
+# VAS
+-a always,exit -F arch=b64 -S connect -F a2=0x2f -k linikatz-vas
+# SSS
+# TODO: check socket not accessible
+# (Socket not accessible?)
+
+## Access to /tmp
+-a always,exit -F dir=/tmp -F perm=r -C auid!=obj_uid -k linikatz-tmp
