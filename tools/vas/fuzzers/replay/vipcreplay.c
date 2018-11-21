@@ -32,7 +32,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <sys/stat.h>
 #include <fcntl.h>
 
-#define STARTFILENAME "ipcreplay-"
+#define STARTFILENAME "vipcreplay-"
 #define ENDREPLAYFILENAME ".replay"
 #define ENDRESPONSEFILENAME ".response"
 #define IPCVERSION 0x03, 0x00, 0x00, 0x00

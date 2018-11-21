@@ -32,7 +32,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <sys/stat.h>
 #include <fcntl.h>
 
-#define STARTFILENAME "ipcfuzz-"
+#define STARTFILENAME "vipcfuzz-"
 #define ENDFUZZFILENAME ".fuzz"
 #define ENDFUZZ2FILENAME ".fuzz2"
 #define ENDRESPONSEFILENAME ".response"
