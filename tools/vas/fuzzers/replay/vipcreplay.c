@@ -24,13 +24,14 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <stdlib.h>
-#include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <ctype.h>
 
 #define STARTFILENAME "vipcreplay-"
 #define ENDREPLAYFILENAME ".replay"
@@ -153,7 +154,7 @@ void replay(const char *pathname, const char *replaybuffer, const int replayleng
 int main(int argc, char **argv) {
 	if (argc < 2) {
 		printf("usage: %s <filename>", argv[0]);
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 	#include "replay.c"
 }

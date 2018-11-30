@@ -24,14 +24,14 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <stdlib.h>
-#include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <sys/stat.h>
+#include <ctype.h>
 
 #define IPCVERSION 0x03, 0x00, 0x00, 0x00
 // this is actually reverse ordered \/ - normally 0x20
@@ -124,13 +124,13 @@ int main(int argc, char **argv) {
 	char *filebuffer;
 	if (argc < 3) {
 		printf("usage: %s <filename> <filename>", argv[0]);
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 	stat(argv[2], &filestatus);
 	filebuffer = calloc(filestatus.st_size, sizeof(char));
 	memset(filebuffer, 0, filestatus.st_size);
 	filehandle = open(argv[2], O_RDONLY);
-	read(filehandle, filebuffer, filestatus.st_size, 0);
+	read(filehandle, filebuffer, filestatus.st_size);
 	close(filehandle);
 	poke(argv[1], filebuffer, filestatus.st_size);
 	free(filebuffer);

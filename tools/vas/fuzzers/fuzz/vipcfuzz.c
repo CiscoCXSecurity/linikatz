@@ -24,13 +24,14 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <stdlib.h>
-#include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <ctype.h>
 
 #define STARTFILENAME "vipcfuzz-"
 #define ENDFUZZFILENAME ".fuzz"
@@ -42,6 +43,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define OPCODE 0x00, 0x00, 0x00, 0x00
 #define MAGICBYTES 'V', 'I', 'P', 'C'
 #define CHECKCRASHCOMMAND "./checkcrash.sh"
+#define TRUE 1
+#define FALSE 0
 
 int filecounter = 0;
 
@@ -184,11 +187,11 @@ void fuzz(const char *pathname, const char *fuzzbuffer, const int fuzzlength, co
 int main(int argc, char **argv) {
 	if (argc < 2) {
 		printf("usage: %s <filename>", argv[0]);
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 	printf("pid = %i\n", getpid());
 	srand(getpid());
-	while (1) {
+	while (TRUE) {
 		#include "fuzz.c"
 	}
 }
