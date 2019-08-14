@@ -1,6 +1,7 @@
 #!/bin/sh
+
 /opt/quest/bin/vastool timesync
-for badvalue in Administrator Administrato root User '' `perl -e 'print "A"x2048'``perl -e 'print "%x"x2048'` '*' 'a'
+for badvalue in Administrator Administrato root User '' `perl -e 'print "A"x2048'` `perl -e 'print "%x"x2048'` '*' a
 do
 	/opt/quest/bin/vastool attrs -u "${badvalue}"
 	/opt/quest/bin/vastool delete user "${badvalue}"
