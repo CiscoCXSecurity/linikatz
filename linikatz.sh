@@ -298,12 +298,14 @@ do
 	shift
 done
 header
-stdio_message_log "vintella-check" "Vintela AD configuration"
+stdio_message_log "vintella-check" "VAS AD configuration"
 [ "$(needs_root)" -eq 1 ] && config_steal /var/opt/quest /etc/opt/quest || stdio_message_warn "needs" "not running as root"
 stdio_message_log "sss-check" "SSS AD configuration"
 [ "$(needs_root)" -eq 1 ] && config_steal /var/lib/sss /etc/sssd || stdio_message_warn "needs" "not running as root"
-stdio_message_log "pbiss-check" "PBIS AD configuration"
+stdio_message_log "pbis-check" "PBIS AD configuration"
 [ "$(needs_root)" -eq 1 ] && config_steal /var/lib/pbis /etc/pbis || stdio_message_warn "needs" "not running as root"
+stdio_message_log "freeipa-check" "FreeIPA AD configuration"
+[ "$(needs_root)" -eq 1 ] && config_steal /etc/ipa || stdio_message_warn "needs" "not running as root"
 stdio_message_log "samba-check" "Samba configuration"
 [ "$(needs_root)" -eq 1 ] && config_steal /var/lib/samba /var/cache/samba /etc/samba || stdio_message_warn "needs" "not running as root"
 stdio_message_log "kerberos-check" "Kerberos configuration"
@@ -347,7 +349,7 @@ then
 	fi
 	if [ "$(file_is_directory /var/opt/quest)" -eq 1 ]
 	then
-		stdio_message_log "vintela-check" "Vintela hashes"
+		stdio_message_log "vas-check" "VAS hashes"
 		sqlite3 /var/opt/quest/vas/authcache/vas_auth.vdb "SELECT krb5pname, sha1hash, legacyHash FROM authcache"
 	fi
 else
@@ -369,7 +371,7 @@ then
 	fi
 	if [ "$(file_is_directory /var/opt/quest)" -eq 1 ]
 	then
-		stdio_message_log "vintela-check" "Vintela ticket list"
+		stdio_message_log "vas-check" "VAS ticket list"
 		if [ "$(file_is_regular /etc/opt/quest/vas/host.keytab)" -eq 1 ]
 		then
 			/opt/quest/bin/ktutil --keytab=/etc/opt/quest/vas/host.keytab
@@ -431,10 +433,10 @@ else
 fi
 if [ "$(needs_root)" -eq 1 ]
 then
-	stdio_message_log "vintela-check" "Vintela processes"
+	stdio_message_log "vas-check" "VAS processes"
 	process_list "vasd" | while read processid
 	do
-		stdio_message_log "check" "Vintela process dump (${processid})"
+		stdio_message_log "check" "VAS process dump (${processid})"
 		process_dump "${processid}" | while read filename
 		do
 			[ "$(file_is_regular "${filename}")" -eq 1 ] && strings "${filename}" | sort | uniq
