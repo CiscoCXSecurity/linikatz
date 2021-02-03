@@ -57,8 +57,8 @@ usage () {
 stdio_message_log () {
 	check="${1}"
 	message="${2}"
-	[ "$(validate_is_string "${check}")" ] || false
-	[ "$(validate_is_string "${message}")" ] || false
+	[ "$(validate_is_string "${check}")" -eq 1 ] || false
+	[ "$(validate_is_string "${message}")" -eq 1 ] || false
 	if [ "${VERBOSE}" -ge 1 ]
 	then
 		stdio_format_message "32" "I" "${check}" "${message}"
@@ -68,16 +68,16 @@ stdio_message_log () {
 stdio_message_warn () {
 	check="${1}"
 	message="${2}"
-	[ "$(validate_is_string "${check}")" ] || false
-	[ "$(validate_is_string "${message}")" ] || false
+	[ "$(validate_is_string "${check}")" -eq 1 ] || false
+	[ "$(validate_is_string "${message}")" -eq 1 ] || false
 	stdio_format_message "33" "W" "${check}" "${message}"
 }
 
 stdio_message_debug () {
 	check="${1}"
 	message="${2}"
-	[ "$(validate_is_string "${check}")" ] || false
-	[ "$(validate_is_string "${message}")" ] || false
+	[ "$(validate_is_string "${check}")" -eq 1 ] || false
+	[ "$(validate_is_string "${message}")" -eq 1 ] || false
 	if [ "${VERBOSE}" -ge 2 ]
 	then
 		stdio_format_message "35" "D" "${check}" "${message}" >&2
@@ -87,8 +87,8 @@ stdio_message_debug () {
 stdio_message_error () {
 	check="${1}"
 	message="${2}"
-	[ "$(validate_is_string "${check}")" ] || false
-	[ "$(validate_is_string "${message}")" ] || false
+	[ "$(validate_is_string "${check}")" -eq 1 ] || false
+	[ "$(validate_is_string "${message}")" -eq 1 ] || false
 	stdio_format_message "31" "E" "${check}" "${message}" >&2
 }
 
@@ -97,10 +97,10 @@ stdio_format_message () {
 	type="${2}"
 	check="${3}"
 	message="${4}"
-	[ "$(validate_is_string "${type}")" ] || false
-	[ "$(validate_is_string "${check}")" ] || false
-	[ "$(validate_is_string "${message}")" ] || false
-	[ "$(validate_is_number "${color}")" ] || false
+	[ "$(validate_is_string "${type}")" -eq 1 ] || false
+	[ "$(validate_is_string "${check}")" -eq 1 ] || false
+	[ "$(validate_is_string "${message}")" -eq 1 ] || false
+	[ "$(validate_is_number "${color}")" -eq 1 ] || false
 	if [ "${COLORING}" -eq 1 ]
 	then
 		printf "\033[%sm%s: [%s] %s\033[m\n" "${color}" "${type}" "${check}" "${message}"
@@ -164,7 +164,7 @@ needs_root () {
 
 file_list () {
 	filename="${1}"
-	[ "$(validate_is_string "${filename}")" ] || false
+	[ "$(validate_is_string "${filename}")" -eq 1 ] || false
 	if [ "$(file_exists "${filename}")" -eq 1 ]
 	then
 		find "${filename}" -type f
@@ -173,7 +173,7 @@ file_list () {
 
 file_exists () {
 	filename="${1}"
-	[ "$(validate_is_string "${filename}")" ] || false
+	[ "$(validate_is_string "${filename}")" -eq 1 ] || false
 	if [ -e "${filename}" ]
 	then
 		printf -- "1\n"
@@ -184,7 +184,7 @@ file_exists () {
 
 file_is_regular () {
 	filename="${1}"
-	[ "$(validate_is_string "${filename}")" ] || false
+	[ "$(validate_is_string "${filename}")" -eq 1 ] || false
 	if [ -f "${filename}" ]
 	then
 		printf -- "1\n"
@@ -195,7 +195,7 @@ file_is_regular () {
 
 file_is_executable () {
 	filename="${1}"
-	[ "$(validate_is_string "${filename}")" ] || false
+	[ "$(validate_is_string "${filename}")" -eq 1 ] || false
 	if [ -x "${filename}" ]
 	then
 		printf -- "1\n"
@@ -206,7 +206,7 @@ file_is_executable () {
 
 file_is_directory () {
 	filename="${1}"
-	[ "$(validate_is_string "${filename}")" ] || false
+	[ "$(validate_is_string "${filename}")" -eq 1 ] || false
 	if [ -d "${filename}" ]
 	then
 		printf -- "1\n"
@@ -217,7 +217,7 @@ file_is_directory () {
 
 file_steal () {
 	filename="${1}"
-	[ "$(validate_is_string "${filename}")" ] || false
+	[ "$(validate_is_string "${filename}")" -eq 1 ] || false
 	if [ "$(file_exists "${filename}")" -eq 1 ]
 	then
 		ls -l "${filename}"
@@ -233,7 +233,7 @@ file_steal () {
 
 process_list () {
 	pattern="${1}"
-	[ "`validate_is_string \"${pattern}\"`" ] || false
+	[ "`validate_is_string "${pattern}"`" -eq 1 ] || false
 	ps -aeo ruser,rgroup,pid,ppid,args | grep -v "PID" | grep "${pattern}" | grep -v "grep" | while read userid groupid processid parentid command arguments
 	do
 		printf -- "${processid}\n"
@@ -243,6 +243,7 @@ process_list () {
 process_dump () {
 	processid="${1}"
 	directoryname="linikatz.$$"
+	[ "$(validate_is_number "${processid}")" -eq 1 ] || false
 	if [ "$(file_is_directory "${directoryname}")" -ne 1 ]
 	then
 		mkdir "${directoryname}"
@@ -252,14 +253,16 @@ process_dump () {
 	printf -- "%s\n" "${dumpedfilename}.${processid}"
 }
 
-process_maps_by_library () {
+process_maps_by_library () {e
+	pattern="${1}"
+	[ "`validate_is_string "${pattern}"`" -eq 1 ] || false
 	egrep -- "${pattern}" /proc/[0-9]*/maps 2>/dev/null | cut -f 3 -d "/" | sort | uniq
 }
 
 config_steal () {
 	for filename in "$@"
 	do
-		[ "$(validate_is_string "${filename}")" ] || false
+		[ "$(validate_is_string "${filename}")" -eq 1 ] || false
 		if [ "$(file_is_directory "${filename}")" -eq 1 ]
 		then
 			file_list "${filename}" | while read filename
