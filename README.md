@@ -4,7 +4,7 @@ This repository contains all of the scripts and source code for "Where 2 Worlds 
 
 To use the linikatz tool:
 
-./linikatz.sh
+```./linikatz.sh```
 
 For other components, please read the manual.
 
