@@ -233,7 +233,7 @@ file_steal () {
 
 process_list () {
 	pattern="${1}"
-	[ "`validate_is_string "${pattern}"`" -eq 1 ] || false
+	[ "$(validate_is_string "${pattern}")" -eq 1 ] || false
 	ps -aeo ruser,rgroup,pid,ppid,args | grep -v "PID" | grep "${pattern}" | grep -v "grep" | while read userid groupid processid parentid command arguments
 	do
 		printf -- "${processid}\n"
@@ -253,9 +253,9 @@ process_dump () {
 	printf -- "%s\n" "${dumpedfilename}.${processid}"
 }
 
-process_maps_by_library () {e
+process_maps_by_library () {
 	pattern="${1}"
-	[ "`validate_is_string "${pattern}"`" -eq 1 ] || false
+	[ "$(validate_is_string "${pattern}")" -eq 1 ] || false
 	egrep -- "${pattern}" /proc/[0-9]*/maps 2>/dev/null | cut -f 3 -d "/" | sort | uniq
 }
 
