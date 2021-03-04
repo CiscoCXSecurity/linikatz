@@ -234,7 +234,7 @@ file_steal () {
 process_list () {
 	pattern="${1}"
 	[ "$(validate_is_string "${pattern}")" -eq 1 ] || false
-	ps -aeo ruser,rgroup,pid,ppid,args | grep -v "PID" | grep "${pattern}" | grep -v "grep" | while read userid groupid processid parentid command arguments
+	ps -aeo ruser,rgroup,pid,ppid,args | egrep -v "PID" | egrep "${pattern}" | egrep -v "grep" | while read userid groupid processid parentid command arguments
 	do
 		printf -- "${processid}\n"
 	done
@@ -320,7 +320,7 @@ then
 	do
 		if [ "$(file_is_regular "${filename}")" -eq 1 ]
 		then
-			tdbdump "${filename}" | grep -A 1 _PASSWORD
+			tdbdump "${filename}" | egrep -A 1 "_PASSWORD"
 		fi
 	done
 else
@@ -346,7 +346,7 @@ then
 		do
 			if [ "$(file_is_regular "${filename}")" -eq 1 ]
 			then
-				tdbdump "${filename}" | grep -A 1 DN=NAME | grep "\\\$6\\\$" | sed -e "s/.*cachedPassword.*\\\$6\\\$/\\\$6\\\$/g" -e "s/\\\00lastCached.*//g" 
+				tdbdump "${filename}" | egrep -A 1 "DN=NAME" | egrep "\\\$6\\\$" | sed -e "s/.*cachedPassword.*\\\$6\\\$/\\\$6\\\$/g" -e "s/\\\00lastCached.*//g" 
 			fi
 		done
 	fi
