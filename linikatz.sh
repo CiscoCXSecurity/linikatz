@@ -226,7 +226,7 @@ file_steal () {
 		then
 			mkdir "${directoryname}"
 		fi
-		stolenfilename="${directoryname}/$(printf "%s" "${filename}" | tr "/" "_").${RANDOM}"
+		stolenfilename="${directoryname}/$(printf -- "%s" "${filename}" | tr "/" "_").${RANDOM}"
 		cp "${filename}" "${stolenfilename}"
 	fi
 }
