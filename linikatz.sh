@@ -301,14 +301,14 @@ do
 	shift
 done
 header
-stdio_message_log "vintella-check" "VAS AD configuration"
-[ "$(needs_root)" -eq 1 ] && config_steal /var/opt/quest /etc/opt/quest || stdio_message_warn "needs" "not running as root"
-stdio_message_log "sss-check" "SSS AD configuration"
-[ "$(needs_root)" -eq 1 ] && config_steal /var/lib/sss /etc/sssd || stdio_message_warn "needs" "not running as root"
-stdio_message_log "pbis-check" "PBIS AD configuration"
-[ "$(needs_root)" -eq 1 ] && config_steal /var/lib/pbis /etc/pbis || stdio_message_warn "needs" "not running as root"
 stdio_message_log "freeipa-check" "FreeIPA AD configuration"
 [ "$(needs_root)" -eq 1 ] && config_steal /etc/ipa || stdio_message_warn "needs" "not running as root"
+stdio_message_log "sss-check" "SSS AD configuration"
+[ "$(needs_root)" -eq 1 ] && config_steal /var/lib/sss /etc/sssd || stdio_message_warn "needs" "not running as root"
+stdio_message_log "vintella-check" "VAS AD configuration"
+[ "$(needs_root)" -eq 1 ] && config_steal /var/opt/quest /etc/opt/quest || stdio_message_warn "needs" "not running as root"
+stdio_message_log "pbis-check" "PBIS AD configuration"
+[ "$(needs_root)" -eq 1 ] && config_steal /var/lib/pbis /etc/pbis || stdio_message_warn "needs" "not running as root"
 stdio_message_log "samba-check" "Samba configuration"
 [ "$(needs_root)" -eq 1 ] && config_steal /var/lib/samba /var/cache/samba /etc/samba || stdio_message_warn "needs" "not running as root"
 stdio_message_log "kerberos-check" "Kerberos configuration"
