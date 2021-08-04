@@ -302,7 +302,7 @@ do
 done
 header
 stdio_message_log "freeipa-check" "FreeIPA AD configuration"
-[ "$(needs_root)" -eq 1 ] && config_steal /var/lib/dirsrv /etc/dirsrv /etc/pki /etc/ipa || stdio_message_warn "needs" "not running as root"
+[ "$(needs_root)" -eq 1 ] && config_steal /run/ipa/ccaches /var/lib/dirsrv /etc/dirsrv /var/lib/softhsm /etc/pki /etc/ipa || stdio_message_warn "needs" "not running as root"
 stdio_message_log "sss-check" "SSS AD configuration"
 [ "$(needs_root)" -eq 1 ] && config_steal /var/lib/sss /etc/sssd || stdio_message_warn "needs" "not running as root"
 stdio_message_log "vintella-check" "VAS AD configuration"
