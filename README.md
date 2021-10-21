@@ -1,6 +1,6 @@
 # linikatz
 
-This repository contains all of the scripts and source code for "Where 2 Worlds Collide: Bringing Mimikatz et al to UNIX". In addition to the main linikatz.sh script, this also includes auditd policies, John the Ripper rules, Metasploit post-exploitation modules and fuzzers. More will follow in due course.
+This repository contains all of the scripts and source code for "Where 2 Worlds Collide: Bringing Mimikatz et al to UNIX". In addition to the main linikatz.sh script, this also includes auditd policies, John the Ripper rules, Metasploit post-exploitation modules and fuzzers. The research behind this has now been incorporated into ATT&CK for Enterprise: T1558. More will follow in due course.
 
 To use the linikatz tool:
 
