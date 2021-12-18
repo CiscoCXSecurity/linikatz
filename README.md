@@ -4,9 +4,13 @@ This repository contains all of the scripts and source code for "Where 2 Worlds 
 
 To use the linikatz tool:
 
-```./linikatz.sh```
+* ```./linikatz.sh```
 
 For other components, please read the manual.
+
+For current detection coverage, please see:
+
+* https://www.virustotal.com/gui/file/3b7a06c53ec0f2ce7b9de4cae9e6e765fd18dc1f2ff522c0ccd9c8c3f9e79532
 
 More details can be found at Portcullis Labs: https://labs.portcullis.co.uk/presentations/where-2-worlds-collide-bringing-mimikatz-et-al-to-unix/
 
