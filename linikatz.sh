@@ -463,6 +463,10 @@ else
 	stdio_message_warn "needs" "not running as root"
 fi
 stdio_message_log "memory-check" "In memory tickets"
+if [ "$(needs_root)" -ne 1 ]
+then
+	stdio_message_warn "needs" "not running as root (affects efficiency)"
+fi
 process_maps_by_library libkrb5 | while read processid
 do
 	stdio_message_log "kerberos-check" "Kerberos process dump (${processid})"
@@ -472,6 +476,10 @@ do
 	done
 done
 stdio_message_log "memory-check" "In memory trusts"
+if [ "$(needs_root)" -ne 1 ]
+then
+	stdio_message_warn "needs" "not running as root (affects efficiency)"
+fi
 process_maps_by_library libldap | while read processid
 do
 	stdio_message_log "ldap-check" "LDAP process dump (${processid})"
