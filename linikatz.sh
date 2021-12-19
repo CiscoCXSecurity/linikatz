@@ -103,9 +103,9 @@ stdio_format_message () {
 	[ "$(validate_is_number "${color}")" -eq 1 ] || false
 	if [ "${COLORING}" -eq 1 ]
 	then
-		printf "\033[%sm%s: [%s] %s\033[m\n" "${color}" "${type}" "${check}" "${message}"
+		printf -- "\033[%sm%s: [%s] %s\033[m\n" "${color}" "${type}" "${check}" "${message}"
 	else
-		printf "%s: [%s] %s\n" "${type}" "${check}" "${message}"
+		printf -- "%s: [%s] %s\n" "${type}" "${check}" "${message}"
 	fi
 }
 
@@ -236,7 +236,7 @@ process_list () {
 	[ "$(validate_is_string "${pattern}")" -eq 1 ] || false
 	ps -aeo ruser,rgroup,pid,ppid,args | egrep -v "PID" | egrep "${pattern}" | egrep -v "grep" | while read userid groupid processid parentid command arguments
 	do
-		printf -- "${processid}\n"
+		printf -- "%s\n" "${processid}"
 	done
 }
 
@@ -463,6 +463,10 @@ else
 	stdio_message_warn "needs" "not running as root"
 fi
 stdio_message_log "memory-check" "In memory tickets"
+if [ "$(needs_root)" -ne 1 ]
+then
+	stdio_message_warn "needs" "not running as root (affects efficiency)"
+fi
 process_maps_by_library libkrb5 | while read processid
 do
 	stdio_message_log "kerberos-check" "Kerberos process dump (${processid})"
@@ -472,6 +476,10 @@ do
 	done
 done
 stdio_message_log "memory-check" "In memory trusts"
+if [ "$(needs_root)" -ne 1 ]
+then
+	stdio_message_warn "needs" "not running as root (affects efficiency)"
+fi
 process_maps_by_library libldap | while read processid
 do
 	stdio_message_log "ldap-check" "LDAP process dump (${processid})"
