@@ -358,7 +358,7 @@ then
 else
 	stdio_message_warn "needs" "not running as root"
 fi
-stdio_message_log "needs" "Machine Kerberos tickets"
+stdio_message_log "check" "Machine Kerberos tickets"
 if [ "$(needs_root)" -eq 1 ]
 then
 	if [ "$(file_is_directory /var/lib/sss)" -eq 1 ]
@@ -419,6 +419,22 @@ do
 		fi
 	fi
 done
+stdio_message_log "check" "KCM Kerberos tickets"
+if [ "$(needs_root)" -eq 1 ]
+then
+	if [ "$(file_is_directory /var/lib/sss)" -eq 1 ]
+	then
+		stdio_message_log "sss-check" "SSS KCM tickets"
+		if [ "$(file_is_regular /var/lib/sss/secrets/secrets.ldb)" -eq 1 ]
+		then
+			# TODO check this actually works, I'm guessing based on https://github.com/mandiant/SSSDKCMExtractor/blob/master/SSSDKCMExtractor.py
+			tdbdump /var/lib/sss/secrets/secrets.ldb | egrep -A 1 "secret"
+			stdio_message_log "warn" "You'll need /var/lib/sss/secrets/.secrets.mkey to decrypt this"
+		fia
+	fi
+else
+	stdio_message_warn "needs" "not running as root"
+fi
 stdio_message_log "memory-check" "In memory passwords, plain text or stored as a hash"
 if [ "$(needs_root)" -eq 1 ]
 then
