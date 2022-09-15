@@ -1,7 +1,3 @@
-## Use of debugger
--a always,exit -F arch=b64 -S ptrace -k linikatz-ptrace
--a always,exit -F arch=b32 -S ptrace -k linikatz-ptrace
-
 ## Access to hashes
 # SSS
 -a always,exit -F dir=/var/lib/sss/db -F perm=rwx -k linikatz-sss
@@ -10,7 +6,7 @@
 # Samba
 -a always,exit -F path=/var/lib/samba/private/secrets.tdb -F perm=rw -k linikatz-smb
 # LDAP
-# TODO
+# ...
 
 ## Access to machine tickets
 # SSS
@@ -18,13 +14,59 @@
 # VAS
 -a always,exit -F path=/etc/opt/quest/vas/host.keytab -F perm=rw -k linikatz-vas
 # (Doesn't have ccache?)
+# LDAP
+# ...
+
+# Samba machine secrets
+
+## Kerberos tickets
+# SSS
+# ...
+# VAS
+# ...
+# PBIS
+# ...
+# Kerberos
+# ...
+
+## Access to configuration
+# VAS
+-a always,exit -F dir=/var/opt/quest -F perm=rwx -k linikatz-vas
+-a always,exit -F dir=/etc/opt/quest -F perm=rwx -k linikatz-vas
+# SSS
+-a always,exit -F dir=/var/lib/sss -F perm=rwx -k linikatz-sss
+-a always,exit -F dir=/etc/sssd -F perm=rwx -k linikatz-sss
+# PBIS
+-a always,exit -F dir=/var/lib/pbis -F perm=rwx -k linikatz-pbis
+-a always,exit -F dir=/etc/pbis-F perm=rwx -k linikatz-pbis
+# FreeIPA
+-a always,exit -F dir=/etc/ipa -F perm=rwx -k linikatz-freeipa
+# Samba
+# ...
+# LDAP
+# ...
+# Kerberos
+-a always,exit -F path=/etc/krb5.conf -k linikatz-kerberos
+-a always,exit -F path=/etc/krb5.keytab -k linikatz-kerberos
+
+## Use of debugger
+# In memory passwords, plain text or stored as a hash
+-a always,exit -F arch=b64 -S ptrace -k linikatz-ptrace
+-a always,exit -F arch=b32 -S ptrace -k linikatz-ptrace
+# /proc/1/maps
 
 ## Access to UNIX sockets
 # VAS
 -a always,exit -F arch=b64 -S connect -F a2=0x2f -k linikatz-vas
 # SSS
+#...
+# PBIS
+#...
+# FreeIPA
+#...
 # TODO: check socket not accessible
 # (Socket not accessible?)
 
 ## Access to /tmp
+# User Kerberos tickets
 -a always,exit -F dir=/tmp -F perm=r -C auid!=obj_uid -k linikatz-tmp
