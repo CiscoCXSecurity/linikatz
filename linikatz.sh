@@ -430,7 +430,7 @@ then
 			# TODO check this actually works, I'm guessing based on https://github.com/mandiant/SSSDKCMExtractor/blob/master/SSSDKCMExtractor.py
 			tdbdump /var/lib/sss/secrets/secrets.ldb | egrep -A 1 "secret"
 			stdio_message_log "warn" "You'll need /var/lib/sss/secrets/.secrets.mkey to decrypt this"
-		fia
+		fi
 	fi
 else
 	stdio_message_warn "needs" "not running as root"
