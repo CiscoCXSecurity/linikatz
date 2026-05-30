@@ -518,7 +518,7 @@ if [ "$(needs_root)" -ne 1 ]
 then
 	stdio_message_warn "needs" "not running as root (affects haul)"
 fi
-config_steal /proc/keys*
+config_steal /proc/keys
 keys_list ".*" | while read keyid
 do
 	stdio_message_log "key-check" "Key dump (${keyid})"
