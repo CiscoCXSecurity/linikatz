@@ -278,6 +278,15 @@ process_maps_by_library () {
 	egrep -- "${pattern}" /proc/[0-9]*/maps 2>/dev/null | cut -f 3 -d "/" | sort | uniq
 }
 
+keys_list () {
+	pattern="${1}"
+	[ "$(validate_is_string "${pattern}")" -eq 1 ] || false
+	cat /proc/keys | egrep "${pattern}" | egrep -v "grep" | while read keyid flags usage lifetime permissions userid groupid type description
+	do
+		printf -- "%i\n" "0x${keyid}"
+	done
+}
+
 COLORING="0"
 VERBOSE="1"
 while [ -n "${1}" ]
@@ -503,4 +512,15 @@ do
 	do
 		[ "$(file_is_regular "${filename}")" -eq 1 ] && strings "${filename}" | sort | uniq
 	done
+done
+stdio_message_log "memory-check" "In memory keys"
+if [ "$(needs_root)" -ne 1 ]
+then
+	stdio_message_warn "needs" "not running as root (affects haul)"
+fi
+config_steal /proc/keys*
+keys_list ".*" | while read keyid
+do
+	stdio_message_log "key-check" "Key dump (${keyid})"
+	keyctl print "${keyid}"
 done
