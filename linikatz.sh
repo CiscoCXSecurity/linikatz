@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright (c) 2015-2021, Cisco International Ltd
+# Copyright (c) 2015-2026, Cisco International Ltd
 # 
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -231,6 +231,25 @@ file_steal () {
 	fi
 }
 
+config_steal () {
+	for filename in "$@"
+	do
+		[ "$(validate_is_string "${filename}")" -eq 1 ] || false
+		if [ "$(file_is_directory "${filename}")" -eq 1 ]
+		then
+			file_list "${filename}" | while read filename
+			do
+				file_steal "${filename}"
+			done
+		else
+			if [ "$(file_is_regular "${filename}")" -eq 1 ]
+			then
+				file_steal "${filename}"
+			fi
+		fi
+	done
+}
+
 process_list () {
 	pattern="${1}"
 	[ "$(validate_is_string "${pattern}")" -eq 1 ] || false
@@ -259,22 +278,12 @@ process_maps_by_library () {
 	egrep -- "${pattern}" /proc/[0-9]*/maps 2>/dev/null | cut -f 3 -d "/" | sort | uniq
 }
 
-config_steal () {
-	for filename in "$@"
+keys_list () {
+	pattern="${1}"
+	[ "$(validate_is_string "${pattern}")" -eq 1 ] || false
+	cat /proc/keys | egrep "${pattern}" | egrep -v "grep" | while read keyid flags usage lifetime permissions userid groupid type description
 	do
-		[ "$(validate_is_string "${filename}")" -eq 1 ] || false
-		if [ "$(file_is_directory "${filename}")" -eq 1 ]
-		then
-			file_list "${filename}" | while read filename
-			do
-				file_steal "${filename}"
-			done
-		else
-			if [ "$(file_is_regular "${filename}")" -eq 1 ]
-			then
-				file_steal "${filename}"
-			fi
-		fi
+		printf -- "%i\n" "0x${keyid}"
 	done
 }
 
@@ -503,4 +512,15 @@ do
 	do
 		[ "$(file_is_regular "${filename}")" -eq 1 ] && strings "${filename}" | sort | uniq
 	done
+done
+stdio_message_log "memory-check" "In memory keys"
+if [ "$(needs_root)" -ne 1 ]
+then
+	stdio_message_warn "needs" "not running as root (affects haul)"
+fi
+config_steal /proc/keys
+keys_list ".*" | while read keyid
+do
+	stdio_message_log "key-check" "Key dump (${keyid})"
+	keyctl print "${keyid}"
 done
